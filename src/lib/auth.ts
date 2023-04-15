@@ -3,6 +3,21 @@ import { UpstashRedisAdapter } from "@next-auth/upstash-redis-adapter";
 import { db } from "./db";
 import GoogleProvider from "next-auth/providers/google"
 
+// Get User details
+function getGoogleCredentials() {
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+    if(!clientId || clientId.length === 0) {
+        throw new Error('Missing GOOGLE_CLIENT_ID')
+    }
+
+    if(!clientSecret || clientSecret.length === 0) {
+        throw new Error('Missing GOOGLE_CLIENT_SECRET')
+    }
+    return {clientId, clientSecret}
+}
+
 export const authOptions:NextAuthOptions = {
     adapter: UpstashRedisAdapter(db),
     session: {
@@ -18,14 +33,12 @@ export const authOptions:NextAuthOptions = {
         }),
     ],
     callbacks: {
-        //Does user have a JWT
         async jwt ({token, user}) { 
             const dbUser = (await db.get('user:${token.id}')) as User | null 
             if(!dbUser) {
                 token.id = user!.id
                 return token
             }
-            //Existing User
             return {
                 id: dbUser.id,
                 name: dbUser.name,
@@ -44,24 +57,8 @@ export const authOptions:NextAuthOptions = {
             return session
         },
         redirect() {
-            return '/dashboard'
+            return 'http://localhost:3000'
         }
     }
     
-}
-
-
-// Get User details
-function getGoogleCredentials() {
-    const clientId = process.env.GOOGLE_CLIENT_ID
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-
-    if(!clientId || clientId.length === 0) {
-        throw new Error('Missing GOOGLE_CLIENT_ID')
-    }
-
-    if(!clientSecret || clientSecret.length === 0) {
-        throw new Error('Missing GOOGLE_CLIENT_SECRET')
-    }
-    return {clientId, clientSecret}
 }
